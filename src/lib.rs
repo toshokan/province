@@ -4,6 +4,9 @@ pub mod isahc;
 #[cfg(feature = "client-reqwest")]
 pub mod reqwest;
 
+#[cfg(feature = "client-hyper")]
+pub mod hyper;
+
 #[derive(Debug)]
 pub enum Body {
     Empty,

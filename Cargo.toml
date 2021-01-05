@@ -19,4 +19,4 @@ isahc = { version = "^1", optional = true }
 bytes = "^0.5"
 url = { version = "^2", optional = true }
 futures = { version = "^0.3", optional = true }
-hyper = { version = "^0.14", features = ["client", "http1" ], optional = true }
+hyper = { version = "^0.14", features = ["client", "http1", "tcp" ], optional = true }
