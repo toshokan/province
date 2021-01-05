@@ -4,19 +4,18 @@ pub mod isahc;
 #[cfg(feature = "reqwest")]
 pub mod reqwest;
 
-
 #[derive(Debug)]
 enum Body {
     Empty,
-    Bytes(bytes::Bytes)
+    Bytes(bytes::Bytes),
 }
 
 impl Body {
     fn as_slice(&self) -> &[u8] {
-	match self {
-	    Self::Empty => &[],
-	    Self::Bytes(b) => b.as_ref()
-	}
+        match self {
+            Self::Empty => &[],
+            Self::Bytes(b) => b.as_ref(),
+        }
     }
 }
 
@@ -42,46 +41,46 @@ mod tests {
     pub struct IpResp(String);
 
     impl Communication for IpReq {
-	type Request = Self;
-	type Response = IpResp;
-	type Error = ();
+        type Request = Self;
+        type Response = IpResp;
+        type Error = ();
 
-	fn into_request(_: Self::Request) -> http::Request<Body> {
-	    use http::Request;
-	    
-	    Request::get("http://whatismyip.akamai.com")
-		.body(Body::Empty)
-		.unwrap()
-	}
+        fn into_request(_: Self::Request) -> http::Request<Body> {
+            use http::Request;
 
-	fn from_response(r: http::Response<Body>) -> Result<Self::Response, Self::Error> {
-	    let bytes = r.into_body();
-	    let content = String::from_utf8(bytes.as_slice().to_vec()).unwrap();
-	    Ok(IpResp(content))
-	}
+            Request::get("http://whatismyip.akamai.com")
+                .body(Body::Empty)
+                .unwrap()
+        }
+
+        fn from_response(r: http::Response<Body>) -> Result<Self::Response, Self::Error> {
+            let bytes = r.into_body();
+            let content = String::from_utf8(bytes.as_slice().to_vec()).unwrap();
+            Ok(IpResp(content))
+        }
     }
 
     fn ip_test_execute(e: impl Execute) -> Result<(), ()> {
-	let resp: IpResp = e.execute::<IpReq>(IpReq)?;
-	dbg!(&resp);
-	let ip_parts: Vec<_> = resp.0.split(".").collect();
-	assert_eq!(ip_parts.len(), 4);
-	Ok(())
+        let resp: IpResp = e.execute::<IpReq>(IpReq)?;
+        dbg!(&resp);
+        let ip_parts: Vec<_> = resp.0.split(".").collect();
+        assert_eq!(ip_parts.len(), 4);
+        Ok(())
     }
-    
+
     #[test]
     #[cfg(feature = "reqwest")]
     fn reqwest() {
-	use crate::reqwest::sync::Executor;
-	let exec = Executor::new();
-	ip_test_execute(exec).unwrap()
+        use crate::reqwest::sync::Executor;
+        let exec = Executor::new();
+        ip_test_execute(exec).unwrap()
     }
 
     #[test]
     #[cfg(feature = "isahc")]
     fn isahc() {
-	use crate::isahc::sync::Executor;
-	let exec = Executor{};
-	ip_test_execute(exec).unwrap()
+        use crate::isahc::sync::Executor;
+        let exec = Executor {};
+        ip_test_execute(exec).unwrap()
     }
 }
