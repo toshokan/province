@@ -1,11 +1,11 @@
-#[cfg(feature = "isahc")]
+#[cfg(feature = "client-isahc")]
 pub mod isahc;
 
-#[cfg(feature = "reqwest")]
+#[cfg(feature = "client-reqwest")]
 pub mod reqwest;
 
 #[derive(Debug)]
-enum Body {
+pub enum Body {
     Empty,
     Bytes(bytes::Bytes),
 }
@@ -19,7 +19,7 @@ impl Body {
     }
 }
 
-trait Communication {
+pub trait Communication {
     type Request;
     type Response;
     type Error;
@@ -28,7 +28,7 @@ trait Communication {
     fn from_response(r: http::Response<Body>) -> Result<Self::Response, Self::Error>;
 }
 
-trait Execute {
+pub trait Execute {
     fn execute<C: Communication>(&self, t: C::Request) -> Result<C::Response, C::Error>;
 }
 
@@ -60,27 +60,11 @@ mod tests {
         }
     }
 
-    fn ip_test_execute(e: impl Execute) -> Result<(), ()> {
+    pub fn ip_test_execute(e: impl Execute) -> Result<(), ()> {
         let resp: IpResp = e.execute::<IpReq>(IpReq)?;
         dbg!(&resp);
         let ip_parts: Vec<_> = resp.0.split(".").collect();
         assert_eq!(ip_parts.len(), 4);
         Ok(())
-    }
-
-    #[test]
-    #[cfg(feature = "reqwest")]
-    fn reqwest() {
-        use crate::reqwest::sync::Executor;
-        let exec = Executor::new();
-        ip_test_execute(exec).unwrap()
-    }
-
-    #[test]
-    #[cfg(feature = "isahc")]
-    fn isahc() {
-        use crate::isahc::sync::Executor;
-        let exec = Executor {};
-        ip_test_execute(exec).unwrap()
     }
 }

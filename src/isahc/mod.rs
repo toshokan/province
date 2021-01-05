@@ -21,3 +21,15 @@ impl From<isahc::Body> for Body {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic() {
+        use sync::Executor;
+        let exec = Executor{};
+        crate::tests::ip_test_execute(exec).unwrap()
+    }
+}
