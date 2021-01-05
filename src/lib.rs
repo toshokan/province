@@ -1,90 +1,9 @@
-pub mod sync {
-    #[cfg(feature = "isahc")]
-    pub mod isahc {
-	use crate::{Body, Communication, Execute};
-	
-	pub struct Executor {
-	}
+#[cfg(feature = "isahc")]
+pub mod isahc;
 
-	impl From<Body> for isahc::Body {
-	    fn from(_: Body) -> Self {
-		isahc::Body::empty()
-	    }
-	}
+#[cfg(feature = "reqwest")]
+pub mod reqwest;
 
-	impl From<isahc::Body> for Body {
-	    fn from(mut body: isahc::Body) -> Self {
-		eprintln!("{:?}", body.len());
-		if body.is_empty() {
-		    Body::Empty
-		} else {
-		    use std::io::Read;
-		    let mut buf = Vec::with_capacity(body.len().unwrap_or_default() as usize);
-		    body.read_to_end(&mut buf).unwrap();
-		    Body::Bytes(bytes::Bytes::from(buf))
-		}
-	    }
-	}
-
-	impl Execute for Executor {
-	    fn execute<C: Communication>(&self, t: C::Request) -> Result<C::Response, C::Error> {
-		use isahc::prelude::*;
-		
-		let req = C::into_request(t);
-		let resp = req.send().unwrap();
-		let (parts, body) = resp.into_parts();
-		let body: Body = body.into();
-		let resp = http::Response::from_parts(parts, body);
-		C::from_response(resp)
-	    }
-	}
-    }
-
-    #[cfg(feature = "reqwest")]
-    pub mod reqwest {
-	use crate::{Body, Communication, Execute};
-	
-	pub struct Executor {
-	    client: reqwest::blocking::Client
-	}
-
-	impl Executor {
-	    pub fn new() -> Self {
-		Self {
-		    client: reqwest::blocking::Client::new()
-		}
-	    }
-	}
-
-	impl From<Body> for reqwest::blocking::Body {
-	    fn from(_: Body) -> Self {
-		reqwest::blocking::Body::from(String::new())
-	    }
-	}
-
-	impl Execute for Executor {
-	    fn execute<C: Communication>(&self, t: C::Request) -> Result<C::Response, C::Error> {
-		use std::convert::TryInto;
-		use reqwest::blocking::Request as RRequest;
-		
-		let req = C::into_request(t);
-		let req: RRequest = req.try_into().unwrap_or_else(|_| panic!("What"));
-		
-		let rresp = self.client.execute(req).unwrap();
-		let mut resp = http::Response::builder()
-		    .status(rresp.status())
-		    .version(rresp.version());
-		for (h, v) in rresp.headers() {
-		    resp = resp.header(h, v);
-		}
-		let body = Body::Bytes(rresp.bytes().unwrap());
-		let resp = resp.body(body).unwrap();
-		let value = C::from_response(resp);
-		value
-	    }
-	}
-    }
-}
 
 #[derive(Debug)]
 enum Body {
@@ -153,7 +72,7 @@ mod tests {
     #[test]
     #[cfg(feature = "reqwest")]
     fn reqwest() {
-	use crate::sync::reqwest::Executor;
+	use crate::reqwest::sync::Executor;
 	let exec = Executor::new();
 	ip_test_execute(exec).unwrap()
     }
@@ -161,7 +80,7 @@ mod tests {
     #[test]
     #[cfg(feature = "isahc")]
     fn isahc() {
-	use crate::sync::isahc::Executor;
+	use crate::isahc::sync::Executor;
 	let exec = Executor{};
 	ip_test_execute(exec).unwrap()
     }
