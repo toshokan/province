@@ -5,7 +5,10 @@ authors = ["toshokan <toshokan@shojigate.net>"]
 edition = "2018"
 
 [features]
-default = ["sync", "async", "reqwest", "isahc"]
+default = ["sync", "async", "client-reqwest", "client-isahc", "client-hyper"]
+client-reqwest = ["reqwest", "url"]
+client-isahc = ["isahc"]
+client-hyper = ["hyper", "futures"]
 sync = []
 async = []
 
@@ -14,4 +17,6 @@ http = "^0.2"
 reqwest = { version = "0.10.10", features = ["blocking"], optional = true}
 isahc = { version = "^1", optional = true }
 bytes = "^0.5"
-url = "^2"
+url = { version = "^2", optional = true }
+futures = { version = "^0.3", optional = true }
+hyper = { version = "^0.14", features = ["client", "http1" ], optional = true }
